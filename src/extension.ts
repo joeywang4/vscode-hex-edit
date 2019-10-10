@@ -6,10 +6,11 @@ import { sprintf } from 'sprintf-js';
 import * as clipboardy from 'clipboardy';
 import * as MemoryMap from 'nrf-intel-hex';
 
-import HexdumpContentProvider from './contentProvider'
+//import HexdumpContentProvider from './contentProvider'
 import HexdumpHoverProvider from './hoverProvider';
 import HexdumpStatusBar from './statusBar';
-import { getFileSize, getBuffer, getEntry, getOffset, getPhysicalPath, getPosition, getRanges, triggerUpdateDecorations, getBufferSelection } from './util';
+import { getBuffer, getEntry, getOffset, getPhysicalPath, getPosition, getRanges, triggerUpdateDecorations, getBufferSelection } from './util';
+import { openEdit, clearAll } from './hex';
 
 export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('hexdump');
@@ -42,52 +43,52 @@ export function activate(context: vscode.ExtensionContext) {
         updateButton();
         statusBar.update();
 
-        for (let d of vscode.workspace.textDocuments) {
-            if (d.languageId === 'hexdump') {
-                provider.update(d.uri);
-            }
-        }
+        //for (let d of vscode.workspace.textDocuments) {
+        //    if (d.languageId === 'hexdump') {
+        //        provider.update(d.uri);
+        //    }
+        //}
     }
     vscode.workspace.onDidChangeConfiguration(updateConfiguration);
     updateConfiguration();
 
     vscode.window.onDidChangeTextEditorSelection((e) => {
-        if (e && e.textEditor.document.languageId === 'hexdump') {
-            let numLine = e.textEditor.document.lineCount
-            if (e.selections[0].start.line + 1 == numLine ||
-                e.selections[0].end.line + 1 == numLine) {
-                e.textEditor.setDecorations(smallDecorationType, []);
-                return;
-            }
-            let startOffset = getOffset(e.selections[0].start);
-            let endOffset = getOffset(e.selections[0].end);
-            if (typeof startOffset == 'undefined' ||
-                typeof endOffset == 'undefined') {
-                e.textEditor.setDecorations(smallDecorationType, []);
-                return;
-            }
-
-            var buf = getBuffer(e.textEditor.document.uri);
-            if (buf)
-            {
-                if (startOffset >= buf.length) {
-                    startOffset = buf.length - 1;
-                }
-                if (endOffset >= buf.length) {
-                    endOffset = buf.length - 1;
-                }
-            }
-
-            var ranges = getRanges(startOffset, endOffset, false);
-            if (config['showAscii']) {
-                ranges = ranges.concat(getRanges(startOffset, endOffset, true));
-            }
-            e.textEditor.setDecorations(smallDecorationType, ranges);
+      if (e && e.textEditor.document.languageId === 'hex-edit') {
+        let numLine = e.textEditor.document.lineCount
+        if (e.selections[0].start.line + 1 == numLine ||
+          e.selections[0].end.line + 1 == numLine) {
+          e.textEditor.setDecorations(smallDecorationType, []);
+          return;
         }
+        let startOffset = getOffset(e.selections[0].start);
+        let endOffset = getOffset(e.selections[0].end);
+        if (typeof startOffset == 'undefined' ||
+          typeof endOffset == 'undefined') {
+          e.textEditor.setDecorations(smallDecorationType, []);
+          return;
+        }
+
+        var buf = getBuffer(e.textEditor.document.uri);
+        if (buf)
+        {
+          if (startOffset >= buf.length) {
+            startOffset = buf.length - 1;
+          }
+          if (endOffset >= buf.length) {
+            endOffset = buf.length - 1;
+          }
+        }
+
+        var ranges = getRanges(startOffset, endOffset, false);
+        if (config['showAscii']) {
+          ranges = ranges.concat(getRanges(startOffset, endOffset, true));
+        }
+        e.textEditor.setDecorations(smallDecorationType, ranges);
+      }
     }, null, context.subscriptions);
 
     let hoverProvider = new HexdumpHoverProvider();
-    vscode.languages.registerHoverProvider('hexdump', hoverProvider);
+    vscode.languages.registerHoverProvider('hex-edit', hoverProvider);
     context.subscriptions.push(hoverProvider);
 
     function hexdumpFile(filePath) {
@@ -98,16 +99,17 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        let fileUri = vscode.Uri.file(filePath.concat('.hexdump'));
+        let fileUri = vscode.Uri.file(filePath);
         // add 'hexdump' extension to assign an editorLangId
-        let hexUri = fileUri.with({ scheme: 'hexdump' });
+        let hexUri = fileUri.with({ scheme: 'file' });
 
-        vscode.commands.executeCommand('vscode.open', hexUri);
+        //vscode.commands.executeCommand('vscode.open', hexUri);
+        openEdit(hexUri);
     }
 
 
-    let provider = new HexdumpContentProvider();
-    let registration = vscode.workspace.registerTextDocumentContentProvider('hexdump', provider);
+    //let provider = new HexdumpContentProvider();
+    //let registration = vscode.workspace.registerTextDocumentContentProvider('hexdump', provider);
 
     vscode.window.onDidChangeActiveTextEditor(e => {
         if (e && e.document && e.document.uri.scheme === 'hexdump') {
@@ -236,7 +238,7 @@ export function activate(context: vscode.ExtensionContext) {
                 });
             }
 
-            provider.update(d.uri);
+            //provider.update(d.uri);
             statusBar.update();
             triggerUpdateDecorations(e);
 
@@ -273,7 +275,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             // Translate one to be in the middle of the byte
-            var pos = e.document.validatePosition(getPosition(offset).translate(0, 1));
+            var pos = e.document.validatePosition(getPosition(offset));
             e.selection = new vscode.Selection(pos, pos);
             e.revealRange(new vscode.Range(pos, pos));
 
@@ -325,7 +327,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             entry.isDirty = false;
             entry.decorations = [];
-            provider.update(d.uri);
+            //provider.update(d.uri);
             statusBar.update();
             triggerUpdateDecorations(e);
             vscode.window.setStatusBarMessage('Hexdump: exported to ' + filepath, 3000);
@@ -568,4 +570,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+  clearAll();
 }

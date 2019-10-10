@@ -24,6 +24,7 @@
   "keywords": [
     "vscode",
     "hexdump",
+    "hex editor",
     "hexadecimal"
   ],
   "categories": [
@@ -36,15 +37,15 @@
   "contributes": {
     "languages": [
       {
-        "id": "hexdump",
+        "id": "hex-edit",
         "extensions": [
-          ".hexdump"
+          ".hex-edit"
         ]
       }
     ],
     "grammars": [
       {
-        "language": "hexdump",
+        "language": "hex-edit",
         "scopeName": "source.hexdump",
         "path": "./syntaxes/hexdump.tmLanguage"
       }
@@ -69,149 +70,149 @@
       {
         "command": "hexdump.editValue",
         "title": "Edit Value Under Cursor",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.gotoAddress",
         "title": "Go to Address...",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.exportToFile",
         "title": "Export to Binary File...",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.toggleEndian",
         "title": "Toggle Between Little and Big Endian",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.searchString",
         "title": "Search a string in the file",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.searchHex",
         "title": "Search a HEX string in the file",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsFormat",
         "title": "Copy the selection in a specific format",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsText",
         "title": "Copy the buffer selection as text",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsC",
         "title": "Copy the buffer selection as C source",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsGolang",
         "title": "Copy the buffer selection as Go source",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsJava",
         "title": "Copy the buffer selection as Java source",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsJSON",
         "title": "Copy the buffer selection as JSON",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsBase64",
         "title": "Copy the buffer selection as Base64",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsHexString",
         "title": "Copy the buffer selection as a hexadecimal string",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsLiteral",
         "title": "Copy the buffer selection as a string literal",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "command": "hexdump.copyAsIntelHex",
         "title": "Copy the buffer selection as Intel Hex",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "hexdump.editValue",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.gotoAddress",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.exportToFile",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.toggleEndian",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.searchString",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.searchHex",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsFormat",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsText",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsC",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsGolang",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsJava",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsJSON",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsBase64",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsHexString",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsLiteral",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         },
         {
           "command": "hexdump.copyAsIntelHex",
-          "when": "editorLangId == hexdump"
+          "when": "editorLangId == hex-edit"
         }
       ],
       "explorer/context": [
@@ -238,31 +239,31 @@
       ],
       "editor/context": [
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.editValue"
         },
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.gotoAddress"
         },
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.searchString"
         },
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.searchHex"
         },
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.exportToFile"
         },
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.toggleEndian"
         },
         {
-          "when": "editorLangId == hexdump",
+          "when": "editorLangId == hex-edit",
           "command": "hexdump.copyAsFormat"
         }
       ]
@@ -281,43 +282,43 @@
       {
         "key": "ctrl+g",
         "command": "hexdump.gotoAddress",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "key": "ctrl+shift+s",
         "mac": "cmd+shift+s",
         "command": "hexdump.exportToFile",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "key": "ctrl+s",
         "mac": "cmd+s",
         "command": "hexdump.save",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "key": "shift+alt+ctrl+e",
         "mac": "shift+alt+cmd+e",
         "command": "hexdump.toggleEndian",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "key": "ctrl+f",
         "mac": "cmd+f",
         "command": "hexdump.searchString",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "key": "alt+ctrl+f",
         "mac": "alt+cmd+f",
         "command": "hexdump.searchHex",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       },
       {
         "key": "alt+ctrl+c",
         "mac": "alt+cmd+c",
         "command": "hexdump.copyAsFormat",
-        "when": "editorLangId == hexdump"
+        "when": "editorLangId == hex-edit"
       }
     ],
     "configuration": {

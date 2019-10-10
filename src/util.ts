@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-
-import HexdumpContentProvider from './contentProvider'
+import { getData } from "./hex";
 
 export function getPhysicalPath(uri: vscode.Uri): string {
-    if (uri.scheme === 'hexdump') {
+    if (uri.scheme === 'hex-edit') {
         // remove the 'hexdump' extension
-        let filepath = uri.with({ scheme: 'file' }).fsPath.slice(0, -8);
+        let filepath = uri.with({ scheme: 'file' }).fsPath.slice(0, -9);
         return filepath;
     }
 
@@ -26,7 +25,7 @@ export function getOffset(pos: vscode.Position) : number {
     var firstByteOffset: number = config['showAddress'] ? 10 : 0;
     var lastByteOffset: number = firstByteOffset + hexLineLength + hexLineLength / config['nibbles'] - 1;
     var firstAsciiOffset: number = lastByteOffset + (config['nibbles'] == 2 ? 4 : 2);
-    var lastAsciiOffset: number = firstAsciiOffset + config['width'];
+    //var lastAsciiOffset: number = firstAsciiOffset + config['width'];
 
     // check if within a valid section
     if (pos.line < firstLine || pos.character < firstByteOffset) {
@@ -117,7 +116,7 @@ interface Map<T> {
 let dict: Map<IEntry> = {};
 
 export function getBuffer(uri: vscode.Uri) : Buffer | undefined {
-    return getEntry(uri).buffer;
+    return getData(uri).buffer;
 }
 
 export function getEntry(uri: vscode.Uri): IEntry | undefined {
@@ -142,7 +141,6 @@ export function getEntry(uri: vscode.Uri): IEntry | undefined {
                 const currentWatcher = dict[filepath].watcher;
                 const newWatcher = fs.watch(filepath, fileListener);
                 dict[filepath] = { buffer: fs.readFileSync(filepath), isDirty: false, waiting: false, watcher: newWatcher, decorations:[] };
-                HexdumpContentProvider.instance.update(uri);
                 if(vscode.window.activeTextEditor.document.uri === uri) {
                   updateDecorations(vscode.window.activeTextEditor);
                 }
