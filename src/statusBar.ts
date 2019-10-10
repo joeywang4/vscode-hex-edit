@@ -2,8 +2,6 @@
 
 import * as vscode from 'vscode';
 
-import { getEntry } from './util';
-
 export default class HexdumpStatusBar {
 
     private static s_instance: HexdumpStatusBar = null;
@@ -56,9 +54,9 @@ export default class HexdumpStatusBar {
         let e = vscode.window.activeTextEditor;
         // check if hexdump document
         if (e && e.document.uri.scheme === 'hexdump') {
-            if (getEntry(e.document.uri).isDirty) {
-                this._statusBarItem.text += ' (modified)';
-            }
+            // if (getEntry(e.document.uri).isDirty) {
+            //     this._statusBarItem.text += ' (modified)';
+            // }
         }
     }
 }

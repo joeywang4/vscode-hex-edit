@@ -2,15 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { getData } from "./hex";
 
-export function getPhysicalPath(uri: vscode.Uri): string {
-    if (uri.scheme === 'hex-edit') {
-        // remove the 'hexdump' extension
-        let filepath = uri.with({ scheme: 'file' }).fsPath.slice(0, -9);
-        return filepath;
-    }
-
-    return uri.fsPath;
-}
+export const getPhysicalPath = (uri: vscode.Uri): string => uri.fsPath;
 
 export function getFileSize(uri: vscode.Uri) : Number {
     var filepath = getPhysicalPath(uri);
@@ -25,7 +17,6 @@ export function getOffset(pos: vscode.Position) : number {
     var firstByteOffset: number = config['showAddress'] ? 10 : 0;
     var lastByteOffset: number = firstByteOffset + hexLineLength + hexLineLength / config['nibbles'] - 1;
     var firstAsciiOffset: number = lastByteOffset + (config['nibbles'] == 2 ? 4 : 2);
-    //var lastAsciiOffset: number = firstAsciiOffset + config['width'];
 
     // check if within a valid section
     if (pos.line < firstLine || pos.character < firstByteOffset) {
@@ -57,7 +48,6 @@ export function getPosition(offset: number, ascii: Boolean = false) : vscode.Pos
     var firstByteOffset: number = config['showAddress'] ? 10 : 0;
     var lastByteOffset: number = firstByteOffset + hexLineLength + hexLineLength / config['nibbles'] - 1;
     var firstAsciiOffset: number = lastByteOffset + (config['nibbles'] == 2 ? 4 : 2);
-    var lastAsciiOffset: number = firstAsciiOffset + config['width'];
 
     let row = firstLine + Math.floor(offset / config['width']);
     let column = offset % config['width'];
@@ -101,60 +91,9 @@ export function getRanges(startOffset: number, endOffset: number, ascii: boolean
     return ranges;
 }
 
-interface IEntry {
-    buffer: Buffer;
-    isDirty: boolean;
-    waiting: boolean;
-    watcher: fs.FSWatcher;
-    decorations?: vscode.Range[];
-}
-
-interface Map<T> {
-    [uri: string]: T;
-}
-
-let dict: Map<IEntry> = {};
-
 export function getBuffer(uri: vscode.Uri) : Buffer | undefined {
     return getData(uri).buffer;
 }
-
-export function getEntry(uri: vscode.Uri): IEntry | undefined {
-    // ignore text files with hexdump syntax
-    if (uri.scheme !== 'hexdump') {
-        return;
-    }
-
-    var filepath = getPhysicalPath(uri);
-
-    if (dict[filepath]) {
-        return dict[filepath];
-    }
-    
-    let buf = fs.readFileSync(filepath);
-    
-    // fs watch listener
-    const fileListener = (event: string, name: string | Buffer) => {
-        if(dict[filepath].waiting === false) {
-            dict[filepath].waiting = true;
-            setTimeout(() => {
-                const currentWatcher = dict[filepath].watcher;
-                const newWatcher = fs.watch(filepath, fileListener);
-                dict[filepath] = { buffer: fs.readFileSync(filepath), isDirty: false, waiting: false, watcher: newWatcher, decorations:[] };
-                if(vscode.window.activeTextEditor.document.uri === uri) {
-                  updateDecorations(vscode.window.activeTextEditor);
-                }
-                currentWatcher.close();
-            }, 100);
-        }
-    }
-    const watcher = fs.watch(filepath, fileListener);
-
-    dict[filepath] = { buffer: buf, isDirty: false, waiting: false, watcher };
-    
-    return dict[filepath];
-}
-
 
 export function toArrayBuffer(buffer: Buffer, offset: number, length: number): ArrayBuffer {
     var ab = new ArrayBuffer(buffer.length);
@@ -163,10 +102,6 @@ export function toArrayBuffer(buffer: Buffer, offset: number, length: number): A
         view[i] = buffer[offset + i];
     }
     return ab;
-}
-
-export function triggerUpdateDecorations(e: vscode.TextEditor) {
-    setTimeout(updateDecorations, 500, e);
 }
 
 export function getBufferSelection(document: vscode.TextDocument, selection?: vscode.Selection): Buffer | undefined {
@@ -184,15 +119,6 @@ export function getBufferSelection(document: vscode.TextDocument, selection?: vs
     return buf;
 }
 
-// create a decorator type that we use to mark modified bytes
-const modifiedDecorationType = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(255,0,0,1)'
-});
-
-function updateDecorations(e: vscode.TextEditor) {
-    const uri = e.document.uri;
-    const entry = getEntry(uri);
-    if (entry) {
-        e.setDecorations(modifiedDecorationType, entry.decorations?entry.decorations:[]);
-    }
+export function handleKeyInput(uri: vscode.Uri, key: string) {
+  console.log(key);
 }

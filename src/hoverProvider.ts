@@ -6,7 +6,7 @@ import * as Long from 'long';
 
 var iconvLite = require('iconv-lite');
 
-import { getFileSize, getBuffer, getEntry, getOffset, getPhysicalPath, triggerUpdateDecorations, toArrayBuffer } from './util';
+import { getBuffer, getOffset, toArrayBuffer } from './util';
 
 export default class HexdumpHoverProvider {
 
