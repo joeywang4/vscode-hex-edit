@@ -64,11 +64,16 @@ export const genDump = (uri: vscode.Uri) : string => {
   }
 }
 
-export const getData = (uri: vscode.Uri) :hexData => {
+export const getName = (uri: vscode.Uri) : string => {
   let name = getPhysicalPath(uri);
+  if(name.substr(-9) === ".hex-edit") name = name.substring(0, name.length-9);
+  return name;
+}
+
+export const getData = (uri: vscode.Uri) : hexData => {
+  let name = getName(uri);
   const editName = name+".hex-edit";
   const editUri = vscode.Uri.file(editName);
-  if(name.substr(-9) === ".hex-edit") name = name.substring(0, name.length-9);
 
   if(dataDict[name]) return dataDict[name];
   else {

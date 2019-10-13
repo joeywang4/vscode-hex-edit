@@ -10,7 +10,7 @@ import * as MemoryMap from 'nrf-intel-hex';
 import HexdumpHoverProvider from './hoverProvider';
 import HexdumpStatusBar from './statusBar';
 import { getBuffer, getOffset, getPhysicalPath, getPosition, getRanges, getBufferSelection, handleKeyInput } from './util';
-import { openEdit, clearAll } from './hex';
+import { openEdit, clearAll, getName, clearData } from './hex';
 
 export function activate(context: vscode.ExtensionContext) {
     const config = vscode.workspace.getConfiguration('hexdump');
@@ -42,15 +42,16 @@ export function activate(context: vscode.ExtensionContext) {
     function updateConfiguration() {
         updateButton();
         statusBar.update();
-
-        //for (let d of vscode.workspace.textDocuments) {
-        //    if (d.languageId === 'hexdump') {
-        //        provider.update(d.uri);
-        //    }
-        //}
     }
     vscode.workspace.onDidChangeConfiguration(updateConfiguration);
     updateConfiguration();
+
+    vscode.workspace.onDidCloseTextDocument(document => {
+      if(document && document.languageId === 'hex-edit') {
+        const name = getName(document.uri);
+        clearData(name);
+      }
+    })
 
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e && e.textEditor.document.languageId === 'hex-edit') {
