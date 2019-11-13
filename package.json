@@ -146,6 +146,11 @@
         "command": "hexdump.copyAsIntelHex",
         "title": "Copy the buffer selection as Intel Hex",
         "when": "editorLangId == hex-edit"
+      },
+      {
+        "command": "hexdump.backspace",
+        "title": "Remove previous char",
+        "when": "editorLangId == hex-edit"
       }
     ],
     "menus": {
@@ -318,6 +323,11 @@
         "key": "alt+ctrl+c",
         "mac": "alt+cmd+c",
         "command": "hexdump.copyAsFormat",
+        "when": "editorLangId == hex-edit"
+      },
+      {
+        "key": "backspace",
+        "command": "hexdump.backspace",
         "when": "editorLangId == hex-edit"
       }
     ],

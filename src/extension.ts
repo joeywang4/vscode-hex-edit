@@ -7,33 +7,21 @@ import * as clipboardy from 'clipboardy';
 import * as MemoryMap from 'nrf-intel-hex';
 
 //import HexdumpContentProvider from './contentProvider'
+import HexEditor from './hexEditor';
 import HexdumpHoverProvider from './hoverProvider';
 import HexdumpStatusBar from './statusBar';
 import { getBuffer, getOffset, getPhysicalPath, getPosition, getRanges, getBufferSelection, handleKeyInput } from './util';
 import { openEdit, clearAll, getName, clearData } from './hex';
 
 export function activate(context: vscode.ExtensionContext) {
-    const config = vscode.workspace.getConfiguration('hexdump');
+    const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('hexdump');
     const charEncoding: string = config['charEncoding'];
     const btnEnabled: string = config['btnEnabled'];
 
     let statusBar = new HexdumpStatusBar();
     context.subscriptions.push(statusBar);
 
-    var smallDecorationType = vscode.window.createTextEditorDecorationType({
-        borderWidth: '1px',
-        borderStyle: 'solid',
-        overviewRulerColor: 'blue',
-        overviewRulerLane: vscode.OverviewRulerLane.Right,
-        light: {
-            // this color will be used in light color themes
-            borderColor: 'darkblue'
-        },
-        dark: {
-            // this color will be used in dark color themes
-            borderColor: 'lightblue'
-        }
-    });
+    let hexEditor = new HexEditor(config);
 
     function updateButton() {
         vscode.commands.executeCommand('setContext', 'hexdump:btnEnabled', btnEnabled);
@@ -47,61 +35,22 @@ export function activate(context: vscode.ExtensionContext) {
     updateConfiguration();
 
     vscode.workspace.onDidCloseTextDocument(document => {
-      if(document && document.languageId === 'hex-edit') {
+      if(document && hexEditor.isHexDocument(document)) {
         const name = getName(document.uri);
         clearData(name);
       }
     })
 
-    vscode.window.onDidChangeTextEditorSelection((e) => {
-      if (e && e.textEditor.document.languageId === 'hex-edit') {
-        let numLine = e.textEditor.document.lineCount
-        if (e.selections[0].start.line + 1 == numLine ||
-          e.selections[0].end.line + 1 == numLine) {
-          e.textEditor.setDecorations(smallDecorationType, []);
-          return;
-        }
-        let startOffset = getOffset(e.selections[0].start);
-        let endOffset = getOffset(e.selections[0].end);
-        if (typeof startOffset == 'undefined' ||
-          typeof endOffset == 'undefined') {
-          e.textEditor.setDecorations(smallDecorationType, []);
-          return;
-        }
-
-        const buf = getBuffer(e.textEditor.document.uri);
-        if (buf)
-        {
-          if (startOffset >= buf.length) {
-            startOffset = buf.length - 1;
-          }
-          if (endOffset >= buf.length) {
-            endOffset = buf.length - 1;
-          }
-        }
-
-        let ranges = getRanges(startOffset, endOffset, false);
-        if (config['showAscii']) {
-          ranges = ranges.concat(getRanges(startOffset, endOffset, true));
-        }
-        e.textEditor.setDecorations(smallDecorationType, ranges);
+    // Add decoration on selection
+    vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
+      if (e && hexEditor.isHexDocument(e.textEditor.document)) {
+        hexEditor.handleTextEditorSelection(e);
       }
     }, null, context.subscriptions);
 
-    // Key binding
-    const disposable = vscode.commands.registerCommand("type", args => {
-      if (!vscode.window.activeTextEditor || !vscode.window.activeTextEditor.document) {
-        return;
-      }
-      if (vscode.window.activeTextEditor.document.languageId !== 'hex-edit') {
-        return vscode.commands.executeCommand('default:type', args);
-      }
-      handleKeyInput(vscode.window.activeTextEditor.document.uri, args.text);
-    })
-    context.subscriptions.push(disposable);
 
     let hoverProvider = new HexdumpHoverProvider();
-    vscode.languages.registerHoverProvider('hex-edit', hoverProvider);
+    vscode.languages.registerHoverProvider(hexEditor.getFileExt, hoverProvider);
     context.subscriptions.push(hoverProvider);
 
     function hexdumpFile(filePath) {
@@ -120,7 +69,23 @@ export function activate(context: vscode.ExtensionContext) {
         openEdit(hexUri);
     }
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.hexdumpPath', () => {
+    function registerCommandNice(commandId: string, run: (...args: any[]) => void): void {
+      context.subscriptions.push(vscode.commands.registerCommand(commandId, run));
+    }
+
+    // Key binding
+    registerCommandNice("type", args => {
+      if (!vscode.window.activeTextEditor || !vscode.window.activeTextEditor.document) {
+        return;
+      }
+      if (vscode.window.activeTextEditor.document.languageId !== 'hex-edit') {
+        return vscode.commands.executeCommand('default:type', args);
+      }
+      const test = vscode.window.activeTextEditor;
+      handleKeyInput(vscode.window.activeTextEditor.document.uri, args.text);
+    });
+
+    registerCommandNice('hexdump.hexdumpPath', () => {
         // Display a message box to the user
         var wpath = vscode.workspace.rootPath;
 
@@ -133,9 +98,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInputBox(ibo).then(filePath => {
             hexdumpFile(filePath);
         });
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.hexdumpOpen', () => {
+    registerCommandNice('hexdump.hexdumpOpen', () => {
         //const defaultUri = vscode.Uri.file(filepath);
         const option: vscode.OpenDialogOptions = { canSelectMany: false };
 
@@ -144,9 +109,9 @@ export function activate(context: vscode.ExtensionContext) {
                 hexdumpFile(fileUri[0].fsPath);
             }
         });
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.hexdumpFile', (fileUri) => {
+    registerCommandNice('hexdump.hexdumpFile', (fileUri) => {
 
         if (typeof fileUri == 'undefined' || !(fileUri instanceof vscode.Uri)) {
             if (vscode.window.activeTextEditor === undefined) {
@@ -172,9 +137,9 @@ export function activate(context: vscode.ExtensionContext) {
             hexdumpFile(fileUri.fsPath);
         }
 
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.gotoAddress', () => {
+    registerCommandNice('hexdump.gotoAddress', () => {
         let e = vscode.window.activeTextEditor;
         let d = e.document;
         // check if hexdump document
@@ -208,9 +173,9 @@ export function activate(context: vscode.ExtensionContext) {
             e.revealRange(new vscode.Range(pos, pos));
 
         });
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.exportToFile', () => {
+    registerCommandNice('hexdump.exportToFile', () => {
         let e = vscode.window.activeTextEditor;
         let d = e.document;
         // check if hexdump document
@@ -234,16 +199,16 @@ export function activate(context: vscode.ExtensionContext) {
                 });
             }
         });
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.toggleEndian', () => {
+    registerCommandNice('hexdump.toggleEndian', () => {
         let config = vscode.workspace.getConfiguration('hexdump');
         const littleEndian = config.get('littleEndian');
         config.update('littleEndian', !littleEndian);
         statusBar.update();
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.searchString', () => {
+    registerCommandNice('hexdump.searchString', () => {
         let e = vscode.window.activeTextEditor;
         let d = e.document;
         // check if hexdump document
@@ -281,9 +246,9 @@ export function activate(context: vscode.ExtensionContext) {
             e.revealRange(new vscode.Range(pos, pos));
 
         });
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.searchHex', async () => {
+    registerCommandNice('hexdump.searchHex', async () => {
         const e = vscode.window.activeTextEditor;
         const d = e.document;
         // check if hexdump document
@@ -325,28 +290,28 @@ export function activate(context: vscode.ExtensionContext) {
         const pos = e.document.validatePosition(getPosition(index).translate(0,1));
         e.selection = new vscode.Selection(pos, pos);
         e.revealRange(new vscode.Range(pos, pos));
-    }));
+    });
 
     const CopyAsFormatHeader = "// Generated by vscode-hexdump (http://github.com/stef-levesque/vscode-hexdump)\n\n"
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsFormat', () => {
+    registerCommandNice('hexdump.copyAsFormat', () => {
         const formats = ["Text", "C", "Golang", "Java", "JSON", "Base64", "HexString", "Literal", "IntelHex"];
         vscode.window.showQuickPick(formats, { ignoreFocusOut: true }).then((format) => {
             if (format && format.length > 0) {
                 vscode.commands.executeCommand('hexdump.copyAs' + format);
             }
         });
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsText', () => {
+    registerCommandNice('hexdump.copyAsText', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
             clipboardy.write(buffer.toString());
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsC', () => {
+    registerCommandNice('hexdump.copyAsC', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
@@ -370,9 +335,9 @@ export function activate(context: vscode.ExtensionContext) {
 
             clipboardy.write(content);
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsGolang', () => {
+    registerCommandNice('hexdump.copyAsGolang', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
@@ -397,9 +362,9 @@ export function activate(context: vscode.ExtensionContext) {
 
             clipboardy.write(content);
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsJava', () => {
+    registerCommandNice('hexdump.copyAsJava', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
@@ -423,41 +388,41 @@ export function activate(context: vscode.ExtensionContext) {
 
             clipboardy.write(content);
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsJSON', () => {
+    registerCommandNice('hexdump.copyAsJSON', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
             clipboardy.write(buffer.toJSON().toString());
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsBase64', () => {
+    registerCommandNice('hexdump.copyAsBase64', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
             clipboardy.write(buffer.toString('base64'));
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsHexString', () => {
+    registerCommandNice('hexdump.copyAsHexString', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
             clipboardy.write(buffer.toString('hex'));
         }
-    }));
+    });
     
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsLiteral', () => {
+    registerCommandNice('hexdump.copyAsLiteral', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
             clipboardy.write('\\x' + buffer.toString('hex').match(/.{1,2}/g).join('\\x'));
         }
-    }));
+    });
 
-    context.subscriptions.push(vscode.commands.registerCommand('hexdump.copyAsIntelHex', () => {
+    registerCommandNice('hexdump.copyAsIntelHex', () => {
         let e = vscode.window.activeTextEditor;
         let buffer = getBufferSelection(e.document, e.selection);
         if (buffer) {
@@ -466,7 +431,11 @@ export function activate(context: vscode.ExtensionContext) {
             memMap.set(address, buffer);
             clipboardy.write(memMap.asHexString());
         }
-    }));
+    });
+
+    registerCommandNice('hexdump.backspace', () => {
+      const test = 123;
+    });
 }
 
 // this method is called when your extension is deactivated
