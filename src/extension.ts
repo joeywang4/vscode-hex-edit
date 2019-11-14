@@ -8,10 +8,9 @@ import * as MemoryMap from 'nrf-intel-hex';
 
 //import HexdumpContentProvider from './contentProvider'
 import HexEditor from './hexEditor';
-import HexdumpHoverProvider from './hoverProvider';
 import HexdumpStatusBar from './statusBar';
-import { getBuffer, getOffset, getPhysicalPath, getPosition, getRanges, getBufferSelection, handleKeyInput } from './util';
-import { openEdit, clearAll, getName, clearData } from './hex';
+import { getBuffer, getOffset, getPhysicalPath, getPosition, getBufferSelection, handleKeyInput } from './util';
+import { pathToUri } from './hexDocument';
 
 export function activate(context: vscode.ExtensionContext) {
     const config: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('hexdump');
@@ -22,6 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(statusBar);
 
     let hexEditor = new HexEditor(config);
+    context.subscriptions.push(hexEditor);
 
     function updateButton() {
         vscode.commands.executeCommand('setContext', 'hexdump:btnEnabled', btnEnabled);
@@ -36,8 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.workspace.onDidCloseTextDocument(document => {
       if(document && hexEditor.isHexDocument(document)) {
-        const name = getName(document.uri);
-        clearData(name);
+        hexEditor.handleEditFileClose(document.fileName);
       }
     })
 
@@ -48,25 +47,20 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }, null, context.subscriptions);
 
-
-    let hoverProvider = new HexdumpHoverProvider();
-    vscode.languages.registerHoverProvider(hexEditor.getFileExt, hoverProvider);
-    context.subscriptions.push(hoverProvider);
-
     function hexdumpFile(filePath) {
-        if (typeof filePath == 'undefined') {
+        if (typeof filePath === 'undefined') {
             return;
         }
         if (!fs.existsSync(filePath)) {
             return;
         }
 
-        let fileUri = vscode.Uri.file(filePath);
+        let fileUri = pathToUri(filePath);
         // add 'hexdump' extension to assign an editorLangId
         let hexUri = fileUri.with({ scheme: 'file' });
 
         //vscode.commands.executeCommand('vscode.open', hexUri);
-        openEdit(hexUri);
+        hexEditor.openHexFile(hexUri);
     }
 
     function registerCommandNice(commandId: string, run: (...args: any[]) => void): void {
@@ -81,8 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (vscode.window.activeTextEditor.document.languageId !== 'hex-edit') {
         return vscode.commands.executeCommand('default:type', args);
       }
-      const test = vscode.window.activeTextEditor;
-      handleKeyInput(vscode.window.activeTextEditor.document.uri, args.text);
+      hexEditor.handleKeyInput(vscode.window.activeTextEditor.document.uri, args.text);
     });
 
     registerCommandNice('hexdump.hexdumpPath', () => {
@@ -440,5 +433,4 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-  clearAll();
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { getData } from "./hex";
+import { getData } from "./hexDocument";
 
 export const getPhysicalPath = (uri: vscode.Uri): string => uri.fsPath;
 
@@ -65,30 +65,6 @@ export function getPosition(offset: number, ascii: Boolean = false) : vscode.Pos
     }
 
     return new vscode.Position(row, column);
-}
-
-export function getRanges(startOffset: number, endOffset: number, ascii: boolean): vscode.Range[] {
-    var config = vscode.workspace.getConfiguration('hexdump');
-    var hexLineLength: number = config['width'] * 2;
-    var firstByteOffset: number = config['showAddress'] ? 10 : 0;
-    var lastByteOffset: number = firstByteOffset + hexLineLength + hexLineLength / config['nibbles'] - 1;
-    var firstAsciiOffset: number = lastByteOffset + (config['nibbles'] == 2 ? 4 : 2);
-    var lastAsciiOffset: number = firstAsciiOffset + config['width'];
-
-    var startPos = getPosition(startOffset, ascii);
-    var endPos = getPosition(endOffset, ascii);
-    endPos = new vscode.Position(endPos.line, endPos.character + (ascii ? 1 : 2));
-
-    var ranges = [];
-    var firstOffset = ascii ? firstAsciiOffset : firstByteOffset;
-    var lastOffset = ascii ? lastAsciiOffset : lastByteOffset;
-    for (var i=startPos.line; i<=endPos.line; ++i) {
-        var start = new vscode.Position(i, (i == startPos.line ? startPos.character : firstOffset));
-        var end = new vscode.Position(i, (i == endPos.line ? endPos.character : lastOffset));
-        ranges.push(new vscode.Range(start, end));
-    }
-
-    return ranges;
 }
 
 export function getBuffer(uri: vscode.Uri) : Buffer | undefined {
